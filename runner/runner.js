@@ -116,9 +116,9 @@ ManifestIterator.prototype = {
             type: this.test_types[this.test_types_index],
             url: manifest_item.url
         };
-        if (manifest_item.hasOwnProperty("ref_url")) {
-            test.ref_type = manifest_item.ref_type;
-            test.ref_url = manifest_item.ref_url;
+        if (manifest_item.hasOwnProperty("references")) {
+            test.ref_type = manifest_item.references[0][1];
+            test.ref_url = manifest_item.references[0][0];
         }
         return test;
     },
