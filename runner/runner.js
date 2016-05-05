@@ -48,11 +48,21 @@ Manifest.prototype = {
     },
 
     by_type:function(type) {
+        var ret = [] ;
         if (this.data.items.hasOwnProperty(type)) {
-            return this.data.items[type];
-        } else {
-            return [];
+            ret = this.data.items[type].slice(0) ;
         }
+        // local_changes.items in manifest is an Object just as
+        // items is.  However, the properties of local_changes.items
+        // are Objects and the properties of items are Arrays.
+        // So we need to extract any relevant local changes by iterating
+        // over the Object and pulling out the referenced nodes as array items.
+        if (this.data.hasOwnProperty("local_changes") && this.data.local_changes.items.hasOwnProperty(type)) {
+            Object.keys(this.data.local_changes.items[type]).forEach(function(ref) {
+                ret.push(this.data.local_changes.items[type][ref][0]) ;
+            }.bind(this));
+        }
+        return ret ;
     }
 };
 
@@ -117,6 +127,7 @@ ManifestIterator.prototype = {
             url: manifest_item.url
         };
         if (manifest_item.hasOwnProperty("references")) {
+            test.ref_length = manifest_item.references.length;
             test.ref_type = manifest_item.references[0][1];
             test.ref_url = manifest_item.references[0][0];
         }
@@ -348,6 +359,7 @@ function ManualUI(elem, runner) {
     this.fail_button = this.elem.querySelector("button.fail");
     this.ref_buttons = this.elem.querySelector(".reftestUI");
     this.ref_type = this.ref_buttons.querySelector(".refType");
+    this.ref_warning = this.elem.querySelector(".reftestWarn");
     this.test_button = this.ref_buttons.querySelector("button.test");
     this.ref_button = this.ref_buttons.querySelector("button.ref");
 
@@ -411,6 +423,11 @@ ManualUI.prototype = {
         if (test.type == "reftest") {
             this.show_ref();
             this.ref_type.textContent = test.ref_type === "==" ? "equal" : "unequal";
+            if (test.ref_length > 1) {
+                this.ref_warning.textContent = "WARNING: test has " + test.ref_length + " references";
+            }  else {
+                this.ref_warning.textContent = "";
+            }
         } else {
             this.hide_ref();
         }
