@@ -424,7 +424,7 @@ ManualUI.prototype = {
             this.show_ref();
             this.ref_type.textContent = test.ref_type === "==" ? "equal" : "unequal";
             if (test.ref_length > 1) {
-                this.ref_warning.textContent = "WARNING: test has " + test.ref_length + " references";
+                this.ref_warning.textContent = "WARNING: only presenting first of " + test.ref_length + " references";
             }  else {
                 this.ref_warning.textContent = "";
             }
