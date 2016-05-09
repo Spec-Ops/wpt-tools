@@ -454,9 +454,19 @@ function TestControl(elem, runner) {
     }.bind(this));
     this.timeout_input = this.elem.querySelector(".timeout_multiplier");
     this.render_checkbox = this.elem.querySelector(".render");
+    this.testcount_area = this.elem.querySelector("#testcount");
     this.runner = runner;
     this.runner.done_callbacks.push(this.on_done.bind(this));
     this.set_start();
+    this.set_counts();
+    this.recount_inputs = Array.prototype.slice.call(
+        this.elem.querySelectorAll("input.recount"));
+    this.recount_inputs.forEach(function(elem) {
+        elem.addEventListener("change", function() {
+            this.set_counts();
+        }.bind(this),
+        false);
+    }.bind(this));
 }
 
 TestControl.prototype = {
@@ -508,6 +518,20 @@ TestControl.prototype = {
             this.set_pause();
         }.bind(this);
 
+    },
+
+    set_counts: function() {
+        if (this.runner.manifest_loading) {
+            setTimeout(function() {
+                this.set_counts();}.bind(this), 1000);
+            return;
+        }
+        var path = this.get_path();
+        var test_types = this.get_test_types();
+        var use_regex = this.get_use_regex();
+        var iterator = new ManifestIterator(this.runner.manifest, path, test_types, use_regex);
+        var count = iterator.count();
+        this.testcount_area.textContent = count;
     },
 
     get_path: function() {
@@ -602,6 +626,7 @@ function Runner(manifest_path) {
     this.results = new Results(this);
 
     this.start_after_manifest_load = false;
+    this.manifest_loading = true;
     this.manifest.load(this.manifest_loaded.bind(this));
 }
 
@@ -617,6 +642,7 @@ Runner.prototype = {
     },
 
     manifest_loaded: function() {
+        this.manifest_loading = false;
         if (this.start_after_manifest_load) {
             this.do_start();
         }
