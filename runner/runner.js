@@ -57,10 +57,36 @@ Manifest.prototype = {
         // are Objects and the properties of items are Arrays.
         // So we need to extract any relevant local changes by iterating
         // over the Object and pulling out the referenced nodes as array items.
-        if (this.data.hasOwnProperty("local_changes") && this.data.local_changes.items.hasOwnProperty(type)) {
-            Object.keys(this.data.local_changes.items[type]).forEach(function(ref) {
-                ret.push(this.data.local_changes.items[type][ref][0]) ;
-            }.bind(this));
+        if (this.data.hasOwnProperty("local_changes")) {
+            var local = this.data.local_changes ;
+            // add in any local items
+            if (local.hasOwnProperty(type)) {
+                Object.keys(local.items[type]).forEach(function(ref) {
+                    ret.push(local.items[type][ref][0]) ;
+                }.bind(this));
+            }
+            // remove any items that are locally deleted but not yet committed
+            if (ret.length && local.hasOwnProperty("deleted") && local.deleted.length) {
+                for (var i = 0; i < local.deleted.length; i++ ) {
+                    for (var j = ret.length-1; j >= 0; j--) {
+                        if (ret[j].path === local.deleted[i]) {
+                            // we have a match
+                            ret.splice(j, 1) ;
+                        }
+                    }
+                }
+            }
+            // remove any items that are ref tests and are locally deleted but 
+            // not yet committed
+            if (ret.length && local.hasOwnProperty("deleted_reftests") && Object.keys(local.deleted_reftests).length > 0 ) {
+                for (var k = ret.length-1; k >= 0; k--) {
+                    if ( local.deleted_reftests[ret[k].path] ) {
+                        // we have a match
+                        ret.splice(k, 1) ;
+                    }
+                }
+            }
+
         }
         return ret ;
     }
@@ -79,7 +105,7 @@ function ManifestIterator(manifest, path, test_types, use_regex) {
         this.regex_pattern = path;
     } else {
         // Split paths by either a comma or whitespace, and ignore empty sub-strings.
-        this.paths = path.split(/[,\s]+/).filter(function(s) { return s.length > 0 });
+        this.paths = path.split(/[,\s]+/).filter(function(s) { return s.length > 0; });
     }
 }
 
