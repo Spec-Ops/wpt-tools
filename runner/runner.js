@@ -60,7 +60,7 @@ Manifest.prototype = {
         if (this.data.hasOwnProperty("local_changes")) {
             var local = this.data.local_changes ;
             // add in any local items
-            if (local.hasOwnProperty(type)) {
+            if (local.items.hasOwnProperty(type)) {
                 Object.keys(local.items[type]).forEach(function(ref) {
                     ret.push(local.items[type][ref][0]) ;
                 }.bind(this));
@@ -451,8 +451,10 @@ ManualUI.prototype = {
             this.ref_type.textContent = test.ref_type === "==" ? "equal" : "unequal";
             if (test.ref_length > 1) {
                 this.ref_warning.textContent = "WARNING: only presenting first of " + test.ref_length + " references";
+                this.ref_warning.style.display = "inline";
             }  else {
                 this.ref_warning.textContent = "";
+                this.ref_warning.style.display = "none";
             }
         } else {
             this.hide_ref();
