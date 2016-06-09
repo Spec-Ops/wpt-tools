@@ -66,27 +66,19 @@ Manifest.prototype = {
                 }.bind(this));
             }
             // remove any items that are locally deleted but not yet committed
-            if (ret.length && local.hasOwnProperty("deleted") && local.deleted.length) {
-                for (var i = 0; i < local.deleted.length; i++ ) {
-                    for (var j = ret.length-1; j >= 0; j--) {
-                        if (ret[j].path === local.deleted[i]) {
-                            // we have a match
-                            ret.splice(j, 1) ;
-                        }
-                    }
-                }
-            }
-            // remove any items that are ref tests and are locally deleted but 
-            // not yet committed
-            if (ret.length && local.hasOwnProperty("deleted_reftests") && Object.keys(local.deleted_reftests).length > 0 ) {
-                for (var k = ret.length-1; k >= 0; k--) {
-                    if ( local.deleted_reftests[ret[k].path] ) {
+            // note that the deleted and deleted_reftests properties of the local_changes
+            // object are always present, even if they are empty
+            if (ret.length && local.deleted.length) {
+                // make a hash of the deleted to speed searching
+                var dels = {} ;
+                local.deleted.forEach(function(x) { dels[x] = true; } );
+                for (var j = ret.length-1; j >= 0; j--) {
+                    if ( dels[ret[j].path] || (type === "reftest" && local.deleted_reftests[ret[j].path]) ){
                         // we have a match
-                        ret.splice(k, 1) ;
+                        ret.splice(j, 1) ;
                     }
                 }
             }
-
         }
         return ret ;
     }
