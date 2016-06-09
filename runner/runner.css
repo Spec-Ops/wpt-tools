@@ -199,4 +199,5 @@ td.ERROR {
 .reftestWarn {
     color: yellow;
     background: black;
+    padding: 8px;
 }

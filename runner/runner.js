@@ -57,10 +57,28 @@ Manifest.prototype = {
         // are Objects and the properties of items are Arrays.
         // So we need to extract any relevant local changes by iterating
         // over the Object and pulling out the referenced nodes as array items.
-        if (this.data.hasOwnProperty("local_changes") && this.data.local_changes.items.hasOwnProperty(type)) {
-            Object.keys(this.data.local_changes.items[type]).forEach(function(ref) {
-                ret.push(this.data.local_changes.items[type][ref][0]) ;
-            }.bind(this));
+        if (this.data.hasOwnProperty("local_changes")) {
+            var local = this.data.local_changes ;
+            // add in any local items
+            if (local.items.hasOwnProperty(type)) {
+                Object.keys(local.items[type]).forEach(function(ref) {
+                    ret.push(local.items[type][ref][0]) ;
+                }.bind(this));
+            }
+            // remove any items that are locally deleted but not yet committed
+            // note that the deleted and deleted_reftests properties of the local_changes
+            // object are always present, even if they are empty
+            if (ret.length && local.deleted.length) {
+                // make a hash of the deleted to speed searching
+                var dels = {} ;
+                local.deleted.forEach(function(x) { dels[x] = true; } );
+                for (var j = ret.length-1; j >= 0; j--) {
+                    if ( dels[ret[j].path] || (type === "reftest" && local.deleted_reftests[ret[j].path]) ){
+                        // we have a match
+                        ret.splice(j, 1) ;
+                    }
+                }
+            }
         }
         return ret ;
     }
@@ -79,7 +97,7 @@ function ManifestIterator(manifest, path, test_types, use_regex) {
         this.regex_pattern = path;
     } else {
         // Split paths by either a comma or whitespace, and ignore empty sub-strings.
-        this.paths = path.split(/[,\s]+/).filter(function(s) { return s.length > 0 });
+        this.paths = path.split(/[,\s]+/).filter(function(s) { return s.length > 0; });
     }
 }
 
@@ -424,9 +442,11 @@ ManualUI.prototype = {
             this.show_ref();
             this.ref_type.textContent = test.ref_type === "==" ? "equal" : "unequal";
             if (test.ref_length > 1) {
-                this.ref_warning.textContent = "WARNING: test has " + test.ref_length + " references";
+                this.ref_warning.textContent = "WARNING: only presenting first of " + test.ref_length + " references";
+                this.ref_warning.style.display = "inline";
             }  else {
                 this.ref_warning.textContent = "";
+                this.ref_warning.style.display = "none";
             }
         } else {
             this.hide_ref();
