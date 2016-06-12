@@ -1,8 +1,9 @@
-/*jshint nonew: false */
+/*jshint eqeqeq: false, nonew: false */
 (function() {
 "use strict";
 var runner;
 var testharness_properties = {output:false,
+                              send_query:false,
                               timeout_multiplier:1};
 
 function Manifest(path) {
@@ -191,7 +192,7 @@ function VisualOutput(elem, runner) {
         this.display_filter_state[display_filter_input.value] = display_filter_input.checked;
         display_filter_input.addEventListener("change", function(e) {
             visual_output.apply_display_filter(e.target.value, e.target.checked);
-        })
+        });
     }
 }
 
@@ -328,7 +329,9 @@ VisualOutput.prototype = {
         a.href = window.URL.createObjectURL(blob);
         a.download = "runner-results.json";
         a.textContent = "Download JSON results";
-        if (!a.getAttribute("download")) a.textContent += " (right-click and save as to download)";
+        if (!a.getAttribute("download")) {
+            a.textContent += " (right-click and save as to download)";
+        }
         a.style.display = "inline";
     },
 
@@ -361,7 +364,7 @@ VisualOutput.prototype = {
         this.display_filter_state[test_status] = display_state;
         var result_cells = this.elem.querySelectorAll(".results > table tr td." + test_status);
         for (var i = 0; i < result_cells.length; ++i) {
-            this.apply_display_filter_to_result_row(result_cells[i].parentNode, display_state)
+            this.apply_display_filter_to_result_row(result_cells[i].parentNode, display_state);
         }
     },
 
@@ -474,6 +477,7 @@ function TestControl(elem, runner) {
     }.bind(this));
     this.timeout_input = this.elem.querySelector(".timeout_multiplier");
     this.render_checkbox = this.elem.querySelector(".render");
+    this.send_query_checkbox = this.elem.querySelector("#send_query");
     this.runner = runner;
     this.runner.done_callbacks.push(this.on_done.bind(this));
     this.set_start();
@@ -544,6 +548,7 @@ TestControl.prototype = {
 
     get_testharness_settings: function() {
         return {timeout_multiplier: parseFloat(this.timeout_input.value),
+                send_query: this.send_query_checkbox.checked,
                 output: this.render_checkbox.checked};
     },
 
@@ -598,6 +603,7 @@ Results.prototype = {
 
 function Runner(manifest_path) {
     this.server = location.protocol + "//" + location.host;
+    this.query_string = location.search;
     this.manifest = new Manifest(manifest_path);
     this.path = null;
     this.test_types = null;
@@ -679,7 +685,7 @@ Runner.prototype = {
             if (this.test_types.length < 3) {
                 tests = this.test_types.join(" tests or ") + " tests";
             }
-            var message = "No " + tests + " found in this path."
+            var message = "No " + tests + " found in this path.";
             document.querySelector(".path").setCustomValidity(message);
             this.done();
         }
@@ -748,6 +754,9 @@ Runner.prototype = {
         if (this.test_window.location === null) {
             this.open_test_window();
         }
+        if (window.testharness_properties.send_query) {
+            path += this.query_string;
+        }
         this.test_window.location.href = this.server + path;
     },
 
@@ -767,32 +776,72 @@ Runner.prototype = {
 
 function parseOptions() {
     var options = {
-        test_types: ["testharness", "reftest", "manual"]
+        test_types: []
     };
 
     var optionstrings = location.search.substring(1).split("&");
     for (var i = 0, il = optionstrings.length; i < il; ++i) {
         var opt = optionstrings[i];
         //TODO: fix this for complex-valued options
-        options[opt.substring(0, opt.indexOf("="))] =
-            opt.substring(opt.indexOf("=") + 1);
+        if (opt.indexOf("=") !== -1) {
+            var name = opt.substring(0, opt.indexOf("="));
+            var val = opt.substring(opt.indexOf("=")+1) ;
+            if (options[name] && Array.isArray(options[name])) {
+                if (val.indexOf(',') !== -1) {
+                    val.split(",").forEach(function(l) {
+                        options[name].push(l);
+                    });
+                } else {
+                    options[name].push(val);
+                }
+            } else if (options[name]) {
+                options[name] += "," + val;
+            } else {
+                options[name] = val;
+            }
+        } else {
+            options[opt] = true;
+        }
     }
+
+    if (options.test_types.length === 0) {
+        options.test_types = ["testharness", "reftest", "manual"];
+    }
+
     return options;
 }
 
 function setup() {
     var options = parseOptions();
 
+
     if (options.path) {
         document.getElementById('path').value = options.path;
     }
+    var setupOptions = [ 'test_types', 'send_query', 'dumpit', 'use_regex', 'render' ];
+    setupOptions.forEach(function(v) {
+        if (options[v]) {
+            if (Array.isArray(options[v])) {
+                // the item is an array so the name is a class
+                options[v].forEach(function(cv) {
+                    var sel = "."+v+"[value="+cv+"]";
+                    var ref = document.querySelector(sel);
+                    if (ref) {
+                        ref.checked = true;
+                    }
+                });
+            } else {
+                document.getElementById(v).checked = true;
+            }
+        }
+    });
 
     runner = new Runner("/MANIFEST.json", options);
     var test_control = new TestControl(document.getElementById("testControl"), runner);
     new ManualUI(document.getElementById("manualUI"), runner);
     new VisualOutput(document.getElementById("output"), runner);
 
-    if (options.autorun === "1") {
+    if (options.autorun || options.autorun === "1") {
         runner.start(test_control.get_path(),
                      test_control.get_test_types(),
                      test_control.get_testharness_settings(),

@@ -28,15 +28,15 @@
           <label class="col-sm-3 control-label">Test types to include</label>
           <div class="col-sm-9">
             <label>
-              <input type=checkbox checked value="testharness" id='th' class='test-type'>
+              <input type=checkbox value="testharness" id='th' class='test-type test_types'>
               JavaScript tests
             </label>
             <label>
-              <input type=checkbox checked value="reftest" id='ref' class='test-type'>
+              <input type=checkbox value="reftest" id='ref' class='test-type test_types'>
               Reftests
             </label>
             <label>
-              <input type=checkbox checked value="manual" id='man' class='test-type'>
+              <input type=checkbox value="manual" id='man' class='test-type test_types'>
               Manual tests
             </label>
           </div>
@@ -71,6 +71,10 @@
               <input type=checkbox id='dumpit'>
               Dump JSON
             </label>
+            <label>
+              <input type=checkbox id='send_query'>
+              Send query string
+            </label>
           </div>
         </div>
 
@@ -85,6 +89,7 @@
   </div>
 
   <div class="instructions">
+      <h2>Instructions</h2>
     <p>
       To run a set of
       <a href="https://github.com/w3c/web-platform-tests/blob/master/README.md">web-platform-tests</a>
@@ -118,6 +123,24 @@
       Tests will run in a new window. For reftests and manual tests it’s best
       to put that window side-by-side with this one.
     </p>
+    <h2>URL Options</h2>
+    <p>It is possible to specify most control options via the URL query string.  Options for the query string are:</p>
+    <dl class="options">
+        <dt>path</dt>
+        <dd>The folder or subfolders to select from. Multiple values are permitted separated by commas or with multiple instances of the parameter (e.g., <code>path=/2dcontext,/editing</code> or <code>path=/2dcontext&amp;path=/editing</code>)</dd>
+        <dt>test_types</dt>
+        <dd>The types of tests to select.  Values are "testharness", "reftest", and "manual". Multiple values are permitted as with <code>path</code> above. Defaults to all three.</dd>
+        <dt>use_regex</dt>
+        <dd>Boolean.  If present then the Use regular expressions option will be selected. Defaults to off.</dd>
+        <dt>dumpit</dt>
+        <dd>Boolean.  If present then the Dump JSON option will be selected. Defaults to off.</dd>
+        <dt>render</dt>
+        <dd>Boolean.  If present then the Show output option will be selected. Defaults to off.</dd>
+        <dt>send_query</dt>
+        <dd>Boolean.  If present  then the Send query string option will be selected. Defaults to off.</dd>
+        <dt>autorun</dt>
+        <dd>Boolean.  If present then the tests matching the selection criteria will be automatically executed. Defaults to off. NOTE: autorun=1 is also permitted for legacy reasons.</dd>
+    </dl>
   </div>
 
   <div id="output">

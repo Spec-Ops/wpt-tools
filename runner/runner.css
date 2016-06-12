@@ -201,3 +201,12 @@ td.ERROR {
     background: black;
     padding: 8px;
 }
+
+dl.options dt {
+    font: fixed;
+    font-weight: bold;
+}
+
+dl.options dd {
+    margin-left: 2em;
+}
