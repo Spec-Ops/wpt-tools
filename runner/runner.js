@@ -461,17 +461,28 @@ ManualUI.prototype = {
 function TestControl(elem, runner) {
     this.elem = elem;
     this.path_input = this.elem.querySelector(".path");
+    this.path_input.addEventListener("change", function() {
+        this.set_counts();
+    }.bind(this), false);
     this.use_regex_input = this.elem.querySelector("#use_regex");
+    this.use_regex_input.addEventListener("change", function() {
+        this.set_counts();
+    }.bind(this), false);
     this.pause_button = this.elem.querySelector("button.togglePause");
     this.start_button = this.elem.querySelector("button.toggleStart");
     this.type_checkboxes = Array.prototype.slice.call(
         this.elem.querySelectorAll("input[type=checkbox].test-type"));
     this.type_checkboxes.forEach(function(elem) {
+        elem.addEventListener("change", function() {
+            this.set_counts();
+        }.bind(this),
+        false);
         elem.addEventListener("click", function() {
             this.start_button.disabled = this.get_test_types().length < 1;
         }.bind(this),
         false);
     }.bind(this));
+
     this.timeout_input = this.elem.querySelector(".timeout_multiplier");
     this.render_checkbox = this.elem.querySelector(".render");
     this.testcount_area = this.elem.querySelector("#testcount");
@@ -479,14 +490,6 @@ function TestControl(elem, runner) {
     this.runner.done_callbacks.push(this.on_done.bind(this));
     this.set_start();
     this.set_counts();
-    this.recount_inputs = Array.prototype.slice.call(
-        this.elem.querySelectorAll("input.recount"));
-    this.recount_inputs.forEach(function(elem) {
-        elem.addEventListener("change", function() {
-            this.set_counts();
-        }.bind(this),
-        false);
-    }.bind(this));
 }
 
 TestControl.prototype = {
@@ -544,8 +547,7 @@ TestControl.prototype = {
         if (this.runner.manifest_loading) {
             setTimeout(function() {
                 this.set_counts();}.bind(this), 1000);
-            return;
-        }
+            return; }
         var path = this.get_path();
         var test_types = this.get_test_types();
         var use_regex = this.get_use_regex();
