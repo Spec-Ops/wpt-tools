@@ -546,8 +546,10 @@ TestControl.prototype = {
     set_counts: function() {
         if (this.runner.manifest_loading) {
             setTimeout(function() {
-                this.set_counts();}.bind(this), 1000);
-            return; }
+                this.set_counts();
+            }.bind(this), 1000);
+            return;
+        }
         var path = this.get_path();
         var test_types = this.get_test_types();
         var use_regex = this.get_use_regex();
