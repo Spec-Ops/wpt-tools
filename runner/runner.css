@@ -122,6 +122,10 @@ body {
     max-width: 800px;
 }
 
+.navbar-brand > img {
+    display: inline;
+}
+
 .navbar-inverse .navbar-brand {
     color: #fff;
 }
