@@ -1,4 +1,5 @@
 /*jshint nonew: false */
+/*globals showdown */
 (function() {
 "use strict";
 var runner;
@@ -184,6 +185,22 @@ function VisualOutput(elem, runner) {
 
     this.display_filter_state = {};
 
+    // simple markdown processor to permit MD in test messages and assertions
+    showdown.extension('strip', function() {
+      return [
+      { type: 'output',
+        regex: /<p>/,
+        replace: ''
+      },
+      { type: 'output',
+        regex: /<\/p>$/,
+        replace: ''
+      }
+      ];
+    });
+    this.markdown = new showdown.Converter({ extensions: [ 'strip' ] }) ;
+
+
     var visual_output = this;
     var display_filter_inputs = this.elem.querySelectorAll(".result-display-filter");
     for (var i = 0; i < display_filter_inputs.length; ++i) {
@@ -277,9 +294,27 @@ VisualOutput.prototype = {
         var message_node = row.appendChild(document.createElement("td"));
         message_node.textContent = message || "";
 
+        var subtest_rows = [];
         var subtests_node = row.appendChild(document.createElement("td"));
         if (subtests_count) {
             subtests_node.textContent = subtest_pass_count + "/" + subtests_count;
+            // if the user wants to see subtest results as well
+            if (document.getElementById("showsubtests").checked) {
+                subtests.forEach(function(subtest) {
+                    if (subtest.status) {
+                        var srow = document.createElement("tr");
+                        srow.className = "subtest";
+                        // use innerHTML to speed creation.  Otherwise could be a performance
+                        // issue when there are many subtests
+                        var content = "<td>" + this.markdown.makeHtml(subtest.name) + "</td>";
+                        content += "<td class='" + subtest.status + "'>" + subtest.status + "</td>";
+                        content += "<td colspan='2'>" + this.markdown.makeHtml(subtest.message) + "</td>";
+                        srow.innerHTML = content;
+                        this.apply_display_filter_to_result_row(srow, this.display_filter_state[subtest.status]);
+                        subtest_rows.push(srow);
+                    }
+                }.bind(this));
+            }
         } else {
             if (status == "PASS") {
                 subtests_node.textContent = "1/1";
@@ -287,6 +322,8 @@ VisualOutput.prototype = {
                 subtests_node.textContent = "0/1";
             }
         }
+
+        // if the user selected to include subtest data, emit that too
 
         var status_arr = ["PASS", "FAIL", "ERROR", "TIMEOUT", "NOTRUN"];
         for (var i = 0; i < status_arr.length; i++) {
@@ -296,6 +333,11 @@ VisualOutput.prototype = {
         this.apply_display_filter_to_result_row(row, this.display_filter_state[test_status]);
         this.results_table.tBodies[0].appendChild(row);
         this.update_meter(this.runner.progress(), this.runner.results.count(), this.runner.test_count());
+        if (subtest_rows.length) {
+            subtest_rows.forEach(function(theRow) {
+                this.results_table.tBodies[0].appendChild(theRow);
+            }.bind(this));
+        }
     },
 
     on_done: function() {
@@ -709,7 +751,7 @@ Runner.prototype = {
             if (this.test_types.length < 3) {
                 tests = this.test_types.join(" tests or ") + " tests";
             }
-            var message = "No " + tests + " found in this path."
+            var message = "No " + tests + " found in this path.";
             document.querySelector(".path").setCustomValidity(message);
             this.done();
         }

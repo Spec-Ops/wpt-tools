@@ -206,3 +206,7 @@ td.ERROR {
     background: black;
     padding: 8px;
 }
+
+tr.subtest > td:first-of-type {
+    padding-left:   2em;
+}
