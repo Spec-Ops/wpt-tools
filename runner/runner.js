@@ -1,5 +1,4 @@
 /*jshint nonew: false */
-/*globals showdown */
 (function() {
 "use strict";
 var runner;
@@ -185,22 +184,6 @@ function VisualOutput(elem, runner) {
 
     this.display_filter_state = {};
 
-    // simple markdown processor to permit MD in test messages and assertions
-    showdown.extension('strip', function() {
-      return [
-      { type: 'output',
-        regex: /<p>/,
-        replace: ''
-      },
-      { type: 'output',
-        regex: /<\/p>$/,
-        replace: ''
-      }
-      ];
-    });
-    this.markdown = new showdown.Converter({ extensions: [ 'strip' ] }) ;
-
-
     var visual_output = this;
     var display_filter_inputs = this.elem.querySelectorAll(".result-display-filter");
     for (var i = 0; i < display_filter_inputs.length; ++i) {
@@ -306,9 +289,9 @@ VisualOutput.prototype = {
                         srow.className = "subtest";
                         // use innerHTML to speed creation.  Otherwise could be a performance
                         // issue when there are many subtests
-                        var content = "<td>" + this.markdown.makeHtml(subtest.name) + "</td>";
+                        var content = "<td>" + subtest.name + "</td>";
                         content += "<td class='" + subtest.status + "'>" + subtest.status + "</td>";
-                        content += "<td colspan='2'>" + this.markdown.makeHtml(subtest.message) + "</td>";
+                        content += "<td colspan='2'>" + subtest.message + "</td>";
                         srow.innerHTML = content;
                         this.apply_display_filter_to_result_row(srow, this.display_filter_state[subtest.status]);
                         subtest_rows.push(srow);
