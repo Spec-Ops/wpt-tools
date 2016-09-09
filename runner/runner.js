@@ -285,13 +285,17 @@ VisualOutput.prototype = {
             if (document.getElementById("showsubtests").checked) {
                 subtests.forEach(function(subtest) {
                     if (subtest.status) {
+                        var m = subtest.message;
+                        if (m === null) {
+                            m = "";
+                        }
                         var srow = document.createElement("tr");
                         srow.className = "subtest";
                         // use innerHTML to speed creation.  Otherwise could be a performance
                         // issue when there are many subtests
                         var content = "<td>" + subtest.name + "</td>";
                         content += "<td class='" + subtest.status + "'>" + subtest.status + "</td>";
-                        content += "<td colspan='2'>" + subtest.message + "</td>";
+                        content += "<td colspan='2'>" + m  + "</td>";
                         srow.innerHTML = content;
                         this.apply_display_filter_to_result_row(srow, this.display_filter_state[subtest.status]);
                         subtest_rows.push(srow);
