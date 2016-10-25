@@ -144,6 +144,11 @@ ManifestIterator.prototype = {
             type: this.test_types[this.test_types_index],
             url: manifest_item.url
         };
+
+        if (test.url.endsWith(".worker")) {
+            test.url += ".html";
+        }
+
         if (manifest_item.hasOwnProperty("references")) {
             test.ref_length = manifest_item.references.length;
             test.ref_type = manifest_item.references[0][1];
